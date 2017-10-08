@@ -11,8 +11,7 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err) {
     if (err) throw errr;
-    console.log("connected as id:" + connection.threadId);
-    connection.end();
+    displayItems();
 });
 
 function displayItems() {
@@ -25,7 +24,7 @@ function displayItems() {
         }
         inquirer.prompt([{
                 type: "input",
-                message: "What is the ID of the item you would like to purchase?",
+                message: "What is the Product Id of the item you would like to purchase?",
                 name: "id",
                 validate: function(value) {
                     if (isNaN(value) === false) {
@@ -37,7 +36,7 @@ function displayItems() {
             {
                 type: "input",
                 message: "How many would you like to purchase?",
-                name: "amount",
+                name: "quantity",
                 validate: function(value) {
                     if (isNaN(value) === false) {
                         return true;
@@ -45,7 +44,32 @@ function displayItems() {
                     return false;
                 }
             }
-        ])
-    });
+        ]).then(function(answer) {
+            var query = "SELECT * FROM products WHERE ?";
+            connection.query(query, { item_id: answer.id }, function(error, results) {
+                if (error) throw error;
+                if (answer.quantity <= results[0].stock_quantity) {
+                    console.log("Your product is in stock!" + "\n");
+
+                    var updateQuery = "UPDATE products SET stock_quantity = " + (results[0].stock_quantity - answer.quantity) + " WHERE item_id = " + answer.id;
+                    connection.query(updateQuery, function(error, results) {
+                        if (error) throw error;
+                        console.log("Your order has been placed!" + "\n");
+                        var selectUpdated = "SELECT * FROM products WHERE ?";
+                        connection.query(selectUpdated, { item_id: answer.id }, function(error, results) {
+                            if (error) throw error;
+                            console.log("Your total is $" + results[0].price * answer.quantity);
+                            connection.end();
+                        })
+                    })
+                } else {
+                    console.log("There is not enough product in stock, there are only " + results[0].stock_quantity + " items, please make another selection" + "\n");
+                 	connection.end();
+                }
+
+            })
+
+        });
+
+    })
 }
-displayItems();
