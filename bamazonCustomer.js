@@ -8,15 +8,26 @@ var connection = mysql.createConnection({
     password: "soccer15",
     database: "bamazon"
 });
-
 connection.connect(function(err) {
     if (err) throw errr;
     displayItems();
 });
-
+function exitApplication() {
+    inquirer.prompt([{
+        type: "confirm",
+        message: "Would you like to exit the inventory log, yes or no?",
+        name: "yes"
+    }]).then(function(answer) {
+        if (answer.yes) {
+            connection.end();
+        } else {
+            displayItems();
+        }
+    })
+}
 function displayItems() {
-    connection.query("SELECT * FROM products", function(err, results) {
-        if (err) throw err;
+    connection.query("SELECT * FROM products", function(error, results) {
+        if (error) throw error;
         console.log("Current Inventory Available: " + "\n");
         for (var i = 0; i < results.length; i++) {
             console.log("Product Id: " + results[i].item_id + " Product Name: " +
@@ -58,18 +69,15 @@ function displayItems() {
                         var selectUpdated = "SELECT * FROM products WHERE ?";
                         connection.query(selectUpdated, { item_id: answer.id }, function(error, results) {
                             if (error) throw error;
-                            console.log("Your total is $" + results[0].price * answer.quantity);
-                            connection.end();
+                            console.log("Your total is $" + results[0].price * answer.quantity + "\n");
+                            exitApplication();
                         })
                     })
                 } else {
-                    console.log("There is not enough product in stock, there are only " + results[0].stock_quantity + " items, please make another selection" + "\n");
-                 	connection.end();
+                    console.log("There is not enough product in stock, there are only " + results[0].stock_quantity + " items, please make another selection." + "\n");
+                 	exitApplication();
                 }
-
             })
-
         });
-
     })
 }
