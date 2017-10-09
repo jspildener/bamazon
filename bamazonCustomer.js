@@ -15,7 +15,7 @@ connection.connect(function(err) {
 function exitApplication() {
     inquirer.prompt([{
         type: "confirm",
-        message: "Would you like to exit the inventory log, yes or no?",
+        message: "Are you done shopping, yes or no?",
         name: "yes"
     }]).then(function(answer) {
         if (answer.yes) {
